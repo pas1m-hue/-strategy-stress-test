@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Strategy — Kolmen kellon stressitesti</title>
+<style>
+  :root{
+    --ink:#0a0f1a;--panel:#0f1626;--panel2:#131c30;--line:#1f2c44;
+    --paper:#e9e4d8;--mut:#8b97ad;--cyan:#5fd0c8;--slate:#6b7891;
+    --amber:#e0a341;--red:#e0564b;--green:#7fb37a;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--ink);color:var(--paper);font-family:var(--sans);
+    line-height:1.45;-webkit-font-smoothing:antialiased;padding:0 0 64px}
+  .wrap{max-width:920px;margin:0 auto;padding:0 18px}
+
+  /* header */
+  header{border-bottom:1px solid var(--line);padding:22px 0 16px;margin-bottom:22px}
+  .hdr-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap}
+  .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.22em;
+    text-transform:uppercase;color:var(--cyan);margin-bottom:8px}
+  h1{font-size:24px;font-weight:680;letter-spacing:-.01em;line-height:1.1}
+  h1 .sub{display:block;font-size:13px;font-weight:400;color:var(--mut);
+    letter-spacing:0;margin-top:5px;font-family:var(--mono)}
+  .badges{display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0}
+  .badge{font-family:var(--mono);font-size:11px;padding:4px 9px;border-radius:5px;
+    display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+  .badge.live{background:rgba(95,208,200,.1);color:var(--cyan);border:1px solid rgba(95,208,200,.25)}
+  .badge.stale{background:rgba(107,120,145,.12);color:var(--slate);border:1px solid var(--line)}
+  .badge.loading{background:rgba(107,120,145,.1);color:var(--mut);border:1px solid var(--line)}
+  .badge.warn{background:rgba(224,163,65,.1);color:var(--amber);border:1px solid rgba(224,163,65,.25)}
+  .dot-live{width:7px;height:7px;border-radius:50%;background:var(--cyan);
+    animation:pulse 2s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+  .badge.stale .dot-live,.badge.loading .dot-live{animation:none;background:var(--mut)}
+  .badge.warn .dot-live{animation:none;background:var(--amber)}
+  .data-vintage{font-family:var(--mono);font-size:10.5px;color:var(--mut);margin-top:4px}
+
+  /* section labels */
+  .sec-label{font-family:var(--mono);font-size:11px;letter-spacing:.18em;
+    text-transform:uppercase;color:var(--mut);margin:26px 0 12px;
+    display:flex;align-items:center;gap:10px}
+  .sec-label::after{content:"";flex:1;height:1px;background:var(--line)}
+  .sec-label .unv{font-family:var(--mono);font-size:10px;color:var(--amber);
+    letter-spacing:.04em;text-transform:none}
+
+  /* inputs */
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media(max-width:560px){.grid{grid-template-columns:1fr}}
+  .fld{background:var(--panel);border:1px solid var(--line);border-radius:7px;padding:11px 13px}
+  .fld label{display:block;font-size:11px;color:var(--mut);font-family:var(--mono);
+    letter-spacing:.04em;margin-bottom:6px;display:flex;align-items:center;gap:7px}
+  .fld .row{display:flex;align-items:baseline;gap:8px}
+  .fld input[type=number]{background:transparent;border:none;color:var(--paper);
+    font-family:var(--mono);font-size:18px;font-weight:600;width:100%;outline:none}
+  .fld .unit{font-family:var(--mono);font-size:12px;color:var(--mut);white-space:nowrap}
+  input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:3px;
+    background:var(--line);border-radius:2px;margin-top:9px;outline:none}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:15px;height:15px;
+    border-radius:50%;background:var(--cyan);cursor:pointer;border:2px solid var(--ink)}
+  input[type=range]::-moz-range-thumb{width:15px;height:15px;border-radius:50%;
+    background:var(--cyan);cursor:pointer;border:2px solid var(--ink)}
+  .btc-fld-row{display:flex;align-items:center;justify-content:space-between;gap:8px}
+  .reset-live{font-family:var(--mono);font-size:10.5px;color:var(--cyan);cursor:pointer;
+    padding:2px 7px;border:1px solid rgba(95,208,200,.3);border-radius:4px;
+    background:rgba(95,208,200,.06);display:none}
+  .reset-live.show{display:inline-block}
+
+  /* toggles */
+  .toggle{display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none}
+  .toggle .sw{width:38px;height:21px;background:var(--line);border-radius:11px;
+    position:relative;transition:background .15s;flex:none}
+  .toggle .sw::after{content:"";position:absolute;top:2px;left:2px;width:17px;height:17px;
+    border-radius:50%;background:var(--mut);transition:transform .15s,background .15s}
+  .toggle.on .sw{background:rgba(95,208,200,.25)}
+  .toggle.on .sw::after{transform:translateX(17px);background:var(--cyan)}
+  .toggle .txt{font-size:12.5px;color:var(--paper)}
+  .toggle .txt small{display:block;color:var(--mut);font-size:11px;font-family:var(--mono)}
+
+  /* clocks */
+  .clocks{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  @media(max-width:680px){.clocks{grid-template-columns:1fr}}
+  .clock{background:var(--panel);border:1px solid var(--line);border-radius:9px;
+    padding:15px 15px 16px;position:relative;overflow:hidden}
+  .clock::before{content:"";position:absolute;top:0;left:0;right:0;height:3px}
+  .clock.s-dormant::before{background:var(--slate)}
+  .clock.s-clear::before{background:var(--green)}
+  .clock.s-watch::before{background:var(--amber)}
+  .clock.s-active::before{background:var(--red)}
+  .clock .ck{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;
+    text-transform:uppercase;color:var(--mut)}
+  .clock .nm{font-size:14.5px;font-weight:640;margin:3px 0 12px}
+  .clock .stat{font-family:var(--mono);font-size:12px;font-weight:600;letter-spacing:.08em;
+    text-transform:uppercase;padding:3px 8px;border-radius:4px;display:inline-block;margin-bottom:11px}
+  .s-dormant .stat{color:var(--slate);background:rgba(107,120,145,.13)}
+  .s-clear .stat{color:var(--green);background:rgba(127,179,122,.13)}
+  .s-watch .stat{color:var(--amber);background:rgba(224,163,65,.13)}
+  .s-active .stat{color:var(--red);background:rgba(224,86,75,.13)}
+  .clock .big{font-family:var(--mono);font-size:22px;font-weight:680;letter-spacing:-.01em}
+  .clock .big small{font-size:13px;color:var(--mut);font-weight:400}
+  .clock .note{font-size:12px;color:var(--mut);margin-top:9px;line-height:1.4}
+
+  /* verdict */
+  .verdict{background:linear-gradient(180deg,var(--panel2),var(--panel));
+    border:1px solid var(--line);border-left:3px solid var(--cyan);border-radius:8px;
+    padding:16px 18px;margin-top:14px;font-size:14px;line-height:1.55}
+  .verdict b{color:var(--cyan);font-weight:640}
+  .verdict .hl-red{color:var(--red);font-weight:600}
+  .verdict .hl-amber{color:var(--amber);font-weight:600}
+  .verdict .hl-green{color:var(--green);font-weight:600}
+
+  /* metrics */
+  .metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+  @media(max-width:680px){.metrics{grid-template-columns:repeat(2,1fr)}}
+  .met{background:var(--panel);border:1px solid var(--line);border-radius:7px;padding:11px 12px}
+  .met .k{font-family:var(--mono);font-size:10px;letter-spacing:.05em;color:var(--mut);
+    text-transform:uppercase;margin-bottom:5px;line-height:1.3}
+  .met .v{font-family:var(--mono);font-size:16.5px;font-weight:640}
+  .met .v small{font-size:11px;color:var(--mut);font-weight:400}
+  .met .v.neg{color:var(--red)}
+  .met .v.pos{color:var(--green)}
+
+  /* matrix */
+  .matrix{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:12px}
+  .matrix th,.matrix td{border:1px solid var(--line);padding:8px 6px;text-align:center}
+  .matrix th{color:var(--mut);font-weight:500;font-size:10.5px;letter-spacing:.04em}
+  .matrix td.rh{color:var(--paper);font-weight:600;text-align:right;padding-right:10px;white-space:nowrap}
+  .cell{font-weight:700;font-size:11px;letter-spacing:.04em}
+  .c-clear{background:rgba(127,179,122,.16);color:var(--green)}
+  .c-watch{background:rgba(224,163,65,.16);color:var(--amber)}
+  .c-active{background:rgba(224,86,75,.18);color:var(--red)}
+  .c-dead{background:rgba(107,120,145,.22);color:#aab4c6}
+  .mx-leg{display:flex;flex-wrap:wrap;gap:14px;margin-top:11px;font-family:var(--mono);font-size:11px;color:var(--mut)}
+  .mx-leg span{display:inline-flex;align-items:center;gap:6px}
+  .dot{width:10px;height:10px;border-radius:2px;display:inline-block}
+
+  /* ladder */
+  .ladder{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:12.5px}
+  .ladder th,.ladder td{border-bottom:1px solid var(--line);padding:8px 6px;text-align:right}
+  .ladder th{color:var(--mut);font-weight:500;font-size:10.5px;letter-spacing:.05em;text-transform:uppercase}
+  .ladder td:first-child,.ladder th:first-child{text-align:left}
+  .pill{font-family:var(--mono);font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:4px}
+  .pill.otm{color:var(--red);background:rgba(224,86,75,.14)}
+  .pill.itm{color:var(--green);background:rgba(127,179,122,.14)}
+  .unv-flag{font-size:10px;color:var(--amber)}
+
+  /* footer */
+  .foot{margin-top:30px;padding-top:18px;border-top:1px solid var(--line);
+    font-size:12px;color:var(--mut);line-height:1.6}
+  .foot b{color:var(--paper);font-weight:600}
+  .foot code{font-family:var(--mono);color:var(--cyan);font-size:11.5px}
+  .warnbox{background:rgba(224,163,65,.07);border:1px solid rgba(224,163,65,.3);
+    border-radius:7px;padding:11px 13px;margin-top:12px;font-size:12px;color:var(--paper);line-height:1.5}
+  .warnbox b{color:var(--amber)}
+
+  /* loading overlay */
+  #loading{position:fixed;inset:0;background:var(--ink);display:flex;align-items:center;
+    justify-content:center;font-family:var(--mono);font-size:13px;color:var(--mut);
+    transition:opacity .3s;z-index:99}
+  #loading.gone{opacity:0;pointer-events:none}
+</style>
+</head>
+<body>
+
+<div id="loading">lataa dataa…</div>
+
+<div class="wrap">
+  <header>
+    <div class="hdr-top">
+      <div>
+        <div class="eyebrow">MSTR · solvenssi-instrumentti</div>
+        <h1>Kolmen kellon stressitesti
+          <span class="sub">BTC-taso × kesto × mNAV → mikä kello laukeaa</span>
+        </h1>
+      </div>
+      <div class="badges">
+        <div class="badge loading" id="btc_badge">
+          <span class="dot-live"></span>
+          <span id="btc_badge_txt">haetaan BTC…</span>
+        </div>
+        <div class="data-vintage" id="data_vintage">data: —</div>
+      </div>
+    </div>
+  </header>
+
+  <div class="sec-label">Syötteet</div>
+  <div class="grid">
+    <div class="fld">
+      <label>BTC-hinta
+        <span class="reset-live" id="reset_live" onclick="resetToLive()">↺ live</span>
+      </label>
+      <div class="row"><span class="unit">$</span><input type="number" id="btc" value="62600" step="500"></div>
+      <input type="range" id="btc_r" min="10000" max="130000" step="500" value="62600">
+    </div>
+    <div class="fld">
+      <label>mNAV (EV / BTC-NAV)</label>
+      <div class="row"><input type="number" id="mnav" value="1.05" step="0.01"><span class="unit">×</span></div>
+      <input type="range" id="mnav_r" min="0.50" max="4.00" step="0.01" value="1.05">
+    </div>
+    <div class="fld">
+      <label>Kesto tällä tasolla</label>
+      <div class="row"><input type="number" id="dur" value="12" step="1"><span class="unit">kk</span></div>
+      <input type="range" id="dur_r" min="0" max="48" step="1" value="12">
+    </div>
+    <div class="fld">
+      <label>Käteisreservi</label>
+      <div class="row"><span class="unit">$</span><input type="number" id="cash" value="900" step="50"><span class="unit">M</span></div>
+    </div>
+    <div class="fld">
+      <label>Preferred-osingot / vuosi</label>
+      <div class="row"><span class="unit">$</span><input type="number" id="div" value="1700" step="50"><span class="unit">M</span></div>
+    </div>
+    <div class="fld">
+      <label>Konvertaabelivelka yht.</label>
+      <div class="row"><span class="unit">$</span><input type="number" id="debt" value="8200" step="100"><span class="unit">M</span></div>
+    </div>
+    <div class="fld">
+      <label>Preferred-nominaali yht.</label>
+      <div class="row"><span class="unit">$</span><input type="number" id="pref" value="15500" step="100"><span class="unit">M</span></div>
+    </div>
+    <div class="fld">
+      <label>Laimennetut osakkeet</label>
+      <div class="row"><input type="number" id="sh" value="386" step="1"><span class="unit">M kpl</span></div>
+    </div>
+    <div class="fld" style="grid-column:1/-1">
+      <div class="toggle on" id="atm">
+        <div class="sw"></div>
+        <div class="txt">Preferred-ATM auki (STRC ~par)
+          <small>pois = molemmat kanavat kiinni</small></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec-label">Kolme kelloa</div>
+  <div class="clocks">
+    <div class="clock" id="ckA">
+      <div class="ck">Kello A</div>
+      <div class="nm">Margin call / tase-insolvenssi</div>
+      <div class="stat" id="A_stat">—</div>
+      <div class="big" id="A_big">—</div>
+      <div class="note" id="A_note"></div>
+    </div>
+    <div class="clock" id="ckB">
+      <div class="ck">Kello B</div>
+      <div class="nm">Osinkoreservi — pehmeä</div>
+      <div class="stat" id="B_stat">—</div>
+      <div class="big" id="B_big">—</div>
+      <div class="note" id="B_note"></div>
+    </div>
+    <div class="clock" id="ckC">
+      <div class="ck">Kello C</div>
+      <div class="nm">Konvertaabeliseinä — kova</div>
+      <div class="stat" id="C_stat">—</div>
+      <div class="big" id="C_big">—</div>
+      <div class="note" id="C_note"></div>
+    </div>
+  </div>
+
+  <div class="verdict" id="verdict"></div>
+
+  <div class="sec-label">Johdetut luvut</div>
+  <div class="metrics">
+    <div class="met"><div class="k">BTC NAV</div><div class="v" id="m_nav">—</div></div>
+    <div class="met"><div class="k">Impl. MSTR-hinta</div><div class="v" id="m_px">—</div></div>
+    <div class="met"><div class="k">Common-jäännös / BTC-NAV</div><div class="v" id="m_res">—</div></div>
+    <div class="met"><div class="k">BTC-myynti / v osinkoihin</div><div class="v" id="m_sell">—</div></div>
+  </div>
+
+  <div class="sec-label">Skenaariomatriisi — hallitseva kello</div>
+  <table class="matrix" id="mx">
+    <thead><tr><th></th><th>6 kk</th><th>12 kk</th><th>24 kk</th><th>36 kk</th></tr></thead>
+    <tbody></tbody>
+  </table>
+  <div class="mx-leg">
+    <span><i class="dot c-clear"></i> Vapaa — diluutiopaine, ei pakkoa</span>
+    <span><i class="dot c-watch"></i> Kello B — franchise (defer vs myy)</span>
+    <span><i class="dot c-active"></i> Kello C — jälleenrahoitus / pakkomyynti</span>
+    <span><i class="dot c-dead"></i> Kello A — tase-insolvenssi</span>
+  </div>
+  <div class="warnbox">Matriisi käyttää yllä asetettua <b>mNAV-oletusta</b>. Liikuta liukua — se on herkin muuttuja. Kesto on tappava akseli: sama BTC-taso voi olla vihreä 6 kk:ssa ja punainen 36 kk:ssa.</div>
+
+  <div class="sec-label">
+    Konvertaabeliporras — equity vai käteinen?
+    <span class="unv" id="unv_flag"></span>
+  </div>
+  <table class="ladder" id="lad">
+    <thead><tr><th>Erääntyy</th><th>$M</th><th>Konv.hinta</th><th>vs impl. hinta</th><th>Settlement</th></tr></thead>
+    <tbody></tbody>
+  </table>
+  <div class="warnbox">
+    <b>⚠ Tarkista 10-K:sta.</b> Erät merkitty <span style="color:var(--amber)">✗</span> ovat <b>likimääräisiä</b> — päivitä strategy.json tuoreimmasta 10-K/10-Q:sta ja pushaa Apps Scriptillä.
+  </div>
+
+  <div class="foot">
+    <b>Mekaniikka.</b> <code>EV = mNAV × BTC_NAV</code> · <code>common = EV − debt − preferred + cash</code> · <code>impl. MSTR = common / osakkeet</code>. Konvertaabeli on equity-settlattu vain jos impl. hinta ≥ konversiohinta — muuten käteisvelka erääntyessä. Osinko on lykättävissä (ei default), joten kello B on franchise- ei solvenssikello. Margin callia ei ole: BTC ei panttina.<br><br>
+    <b>Data-arkkitehtuuri:</b> <code>data/strategy.json</code> → GitHub Pages → tämä sivu. Päivitä Sheetsissä, <code>syncToGitHub()</code> Apps Scriptistä. Live BTC: CoinGecko v3, päivittyy 60 s välein — käyttäjä voi ylikirjoittaa sliderilla (<code>↺ live</code> palauttaa).<br><br>
+    <b>*Common-jäännös:</b> implisiittinen common-markkina-arvo / BTC-NAV. &lt;100 % = common alle BTC-reservin per osake — ei silti "halpa bitcoin", ~$23B senioria edellä. Negatiivinen = common pyyhitty vaikka NAV positiivinen.<br><br>
+    <span id="data_source_foot" style="color:var(--slate)"></span>
+  </div>
+</div>
+
+<script>
+// ── Config ────────────────────────────────────────────────────────────────
+const DATA_URL = './data/strategy.json';
+const BTC_URL  = 'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd';
+
+// ── State ─────────────────────────────────────────────────────────────────
+let BTC_HOLDINGS = 846842;
+let LADDER = [];
+let btcManual = false;
+let livePrice = null;
+
+const F = {btc:62600,mnav:1.05,dur:12,cash:900,div:1700,debt:8200,pref:15500,sh:386,atm:true};
+
+// ── DOM helpers ───────────────────────────────────────────────────────────
+const $ = id => document.getElementById(id);
+const fmtUSD = (v,d=0) => '$'+v.toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});
+const fmtB   = v => '$'+(v/1000).toFixed(1)+'B';
+const fmtPx  = v => v<=0?'$0':'$'+v.toLocaleString('en-US',{maximumFractionDigits:v<10?2:0});
+
+// ── Data loading ──────────────────────────────────────────────────────────
+async function loadJSON() {
+  const res = await fetch(DATA_URL);
+  if (!res.ok) throw new Error('JSON '+res.status);
+  return res.json();
+}
+
+async function loadBTC() {
+  const res = await fetch(BTC_URL);
+  if (!res.ok) throw new Error('CoinGecko '+res.status);
+  const d = await res.json();
+  return d.bitcoin.usd;
+}
+
+function applyJSON(data) {
+  const bs = data.balance_sheet;
+  BTC_HOLDINGS = bs.btc_holdings;
+  F.cash = bs.cash_reserve_usd_m;
+  F.sh   = bs.shares_diluted_m;
+  F.div  = data.preferred_annual_div_m;
+  F.debt = data.total_debt_m;
+  F.pref = data.total_preferred_m;
+
+  // Rebuild LADDER from JSON
+  LADDER = (data.convertible_ladder || []).map(t => [
+    t.label, t.months_from_base, t.principal_m, t.conversion_price, t.verified
+  ]);
+
+  // Refresh input displays
+  const fields = {cash:F.cash,div:F.div,debt:F.debt,pref:F.pref,sh:F.sh};
+  Object.entries(fields).forEach(([k,v])=>{ const el=$(k); if(el) el.value=v; });
+
+  // Meta
+  $('data_vintage').textContent = 'data: ' + data.meta.last_updated;
+  const src = $('data_source_foot');
+  if(src) src.textContent = data.meta.source;
+
+  // Unverified flag
+  const unv = (data.convertible_ladder||[]).filter(t=>!t.verified).length;
+  const flag = $('unv_flag');
+  if(flag) flag.textContent = unv > 0 ? `(${unv} erää likimääräistä — verify 10-K)` : '';
+}
+
+function setBTCBadge(price, status) {
+  // status: 'live' | 'stale' | 'loading' | 'manual'
+  const badge = $('btc_badge');
+  const txt   = $('btc_badge_txt');
+  badge.className = 'badge ' + (status==='live'?'live':status==='manual'?'warn':'stale');
+  const label = price ? fmtUSD(Math.round(price)) : '—';
+  txt.textContent = status==='live'   ? 'live '+label
+    : status==='manual' ? 'manuaali '+label
+    : status==='loading'? 'haetaan BTC…'
+    : 'offline '+label;
+}
+
+function resetToLive() {
+  if (!livePrice) return;
+  btcManual = false;
+  F.btc = livePrice;
+  $('btc').value = livePrice;
+  $('btc_r').value = livePrice;
+  $('reset_live').classList.remove('show');
+  setBTCBadge(livePrice, 'live');
+  render();
+}
+
+// ── Calc ──────────────────────────────────────────────────────────────────
+function calc(o) {
+  const navM    = BTC_HOLDINGS * o.btc / 1e6;
+  const ev      = o.mnav * navM;
+  const commonM = ev - o.debt - o.pref + o.cash;
+  const px      = commonM * 1e6 / (o.sh * 1e6);
+  const resPct  = navM > 0 ? commonM / navM * 100 : 0;
+
+  const aTrig    = o.debt * 1e6 / BTC_HOLDINGS;
+  const prefTrig = (o.debt + o.pref) * 1e6 / BTC_HOLDINGS;
+  const aFires   = navM < o.debt;
+
+  const months   = o.div > 0 ? o.cash / (o.div / 12) : 999;
+  const sellCoins= o.btc > 0 ? o.div * 1e6 / o.btc : 0;
+  const sellPct  = sellCoins / BTC_HOLDINGS * 100;
+  const chansShut= !o.atm || o.mnav < 1.0;
+
+  let cWall = 0, cTranches = [];
+  LADDER.forEach(([lbl, mo, amt, cp]) => {
+    if (px < cp && mo <= o.dur) { cWall += amt; cTranches.push(lbl); }
+  });
+
+  // BTC rally needed for nearest OTM tranche
+  const near = LADDER[0] || ['—', 0, 0, 0];
+  const rallyCommon = near[3] * o.sh;
+  const rallyEV     = rallyCommon + o.debt + o.pref - o.cash;
+  const rallyBTC    = o.mnav > 0 ? (rallyEV * 1e6 / o.mnav) / BTC_HOLDINGS : 0;
+
+  return {navM,commonM,px,resPct,aTrig,prefTrig,aFires,months,sellCoins,sellPct,
+          chansShut,cWall,cTranches,rallyBTC,near};
+}
+
+function statusB(r, o) {
+  if (!r.chansShut) return 'clear';
+  if (o.dur < r.months) return 'watch';
+  return 'active';
+}
+function statusC(r) {
+  if (r.cWall <= 0) return 'clear';
+  if (r.cWall <= F.cash) return 'watch';
+  return 'active';
+}
+
+// ── Render ────────────────────────────────────────────────────────────────
+function render() {
+  const o = {...F};
+  const r = calc(o);
+
+  $('m_nav').textContent = fmtB(r.navM);
+  $('m_px').innerHTML    = fmtPx(r.px);
+  const re = $('m_res');
+  re.textContent = r.resPct <= 0 ? '≈0% pyyhitty' : r.resPct.toFixed(0)+'%';
+  re.className   = 'v '+(r.resPct<=0?'neg':r.resPct<100?'':'pos');
+  $('m_sell').innerHTML = Math.round(r.sellCoins).toLocaleString()+' BTC <small>· '+r.sellPct.toFixed(1)+'%/v</small>';
+
+  // Clock A
+  const ckA = $('ckA');
+  ckA.className = 'clock '+(r.aFires?'s-active':'s-dormant');
+  $('A_stat').textContent = r.aFires ? 'Laukaisee' : 'Lepää';
+  $('A_big').innerHTML  = 'Laukaisuhinta <small>BTC</small> '+fmtPx(r.aTrig);
+  $('A_note').innerHTML = 'Ei margin callia — BTC ei panttina. Laukeaa vasta jos BTC-NAV &lt; velka. Preferred täysinalivakuudessa &lt; '+fmtPx(r.prefTrig)+'.';
+
+  // Clock B
+  const sB = statusB(r, o);
+  $('ckB').className = 'clock s-'+sB;
+  $('B_stat').textContent = {clear:'Hallinnassa',watch:'Vahdissa',active:'Laukaisee'}[sB];
+  $('B_big').innerHTML = (r.months>=999?'∞':r.months.toFixed(1))+' <small>kk kattavuus</small>';
+  $('B_note').innerHTML = sB==='clear'
+    ? 'Anti auki — osingot rahoitettavissa ilman BTC-myyntiä.'
+    : sB==='watch'
+      ? 'Kanavat kiinni, reservi kattaa '+r.months.toFixed(1)+' kk. Sitten: lykkää tai myy.'
+      : 'Reservi ohi ('+o.dur+'kk &gt; '+r.months.toFixed(1)+'kk) kanavien ollessa kiinni. Pakko lykätä osinko tai myydä BTC.';
+
+  // Clock C
+  const sC = statusC(r);
+  $('ckC').className = 'clock s-'+sC;
+  $('C_stat').textContent = {clear:'Lepää',watch:'Vahdissa',active:'Laukaisee'}[sC];
+  $('C_big').innerHTML = r.cWall<=0 ? '$0 <small>käteiseriä</small>' : fmtUSD(r.cWall)+'M <small>käteiseen</small>';
+  $('C_note').innerHTML = r.cWall<=0
+    ? 'Impl. hinta yli erien konversiohintojen ikkunassa — voi settlata equityllä.'
+    : 'Erä '+r.cTranches.join(', ')+' OTM ('+o.dur+'kk ikkuna) → käteisvelka. Flippaa equityksi kun BTC ≥ '+fmtPx(r.rallyBTC)+' (tällä mNAV).';
+
+  // Verdict
+  const segs = [];
+  segs.push(r.aFires
+    ? `<span class="hl-red">Tase-insolvenssi:</span> BTC-NAV alle velan.`
+    : `<b>Vakavaraisuus ehjä</b> — ei pakkolikvidaatiota tällä BTC-tasolla.`);
+  if (r.resPct<=0) segs.push(`Common-equity <span class="hl-red">käytännössä pyyhitty</span> — seniorit syövät NAV:n. BTC-NAV silti ${fmtB(r.navM)}.`);
+  else if (r.resPct<100) segs.push(`Common alle BTC-reservin (${r.resPct.toFixed(0)}%) — ~$${(o.debt+o.pref).toLocaleString()}M senioria edellä, ei "halpaa bitcoinia".`);
+  const driver = sC==='active'
+    ? `<span class="hl-red">Kello C (jälleenrahoitus)</span> — ${fmtUSD(r.cWall)}M käteiseen ${o.dur} kk:ssa.`
+    : sB==='active' ? `<span class="hl-amber">Kello B (franchise)</span> — lykkää osinko tai myy BTC.`
+    : sB==='watch'  ? `<span class="hl-amber">Kello B vahdissa</span> — ${r.months.toFixed(1)} kk reserviä jäljellä.`
+    : `<span class="hl-green">ei akuuttia kelloa</span> — paine equity-kanavan diluutiossa.`;
+  segs.push(`Sitova paine: ${driver}`);
+  if (r.near[0]!=='—') segs.push(`Lähin kova testi: ${r.near[0]} (${fmtUSD(r.near[2])}M) vaatii MSTR ≥ ${fmtPx(r.near[3])} ≈ BTC ${fmtPx(r.rallyBTC)} (tällä mNAV:lla).`);
+  $('verdict').innerHTML = segs.join(' ');
+
+  renderMatrix(o);
+  renderLadder(o, r);
+}
+
+function cellClass(o2) {
+  const r = calc(o2);
+  if (r.aFires)           return ['c-dead',  'INSOLV'];
+  if (statusC(r)==='active') return ['c-active','KELLO C'];
+  const sB = statusB(r, o2);
+  if (sB==='active'||sB==='watch') return ['c-watch','KELLO B'];
+  return ['c-clear','VAPAA'];
+}
+
+function renderMatrix(o) {
+  const rows = [100000,75000,60000,45000,30000,20000];
+  const durs = [6,12,24,36];
+  const tb = $('mx').querySelector('tbody'); tb.innerHTML='';
+  rows.forEach(btc => {
+    const tr = document.createElement('tr');
+    const lbl = btc===75000 ? fmtPx(btc)+' ‹kust.›' : fmtPx(btc);
+    tr.innerHTML = `<td class="rh">${lbl}</td>`;
+    durs.forEach(d => {
+      const [cls,txt] = cellClass({...o,btc,dur:d});
+      tr.innerHTML += `<td class="cell ${cls}">${txt}</td>`;
+    });
+    tb.appendChild(tr);
+  });
+}
+
+function renderLadder(o, r) {
+  const tb = $('lad').querySelector('tbody'); tb.innerHTML='';
+  LADDER.forEach(([lbl, mo, amt, cp, verified]) => {
+    const otm = r.px < cp;
+    const gap = ((r.px / cp - 1) * 100).toFixed(0);
+    const vFlag = verified===false ? '<span class="unv-flag">✗</span>' : '';
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${lbl} ${vFlag} <span style="color:var(--mut)">·${mo}kk</span></td>
+      <td>${fmtUSD(amt)}M</td>
+      <td>${fmtPx(cp)}</td>
+      <td style="color:${otm?'var(--red)':'var(--green)'}">${Number(gap)>0?'+':''}${gap}%</td>
+      <td><span class="pill ${otm?'otm':'itm'}">${otm?'KÄTEINEN':'EQUITY'}</span></td>`;
+    tb.appendChild(tr);
+  });
+}
+
+// ── Input wiring ──────────────────────────────────────────────────────────
+function bindInput(id, key, rangeId) {
+  const el = $(id);
+  el.addEventListener('input', () => {
+    F[key] = parseFloat(el.value) || 0;
+    if (key==='btc') { btcManual=true; $('reset_live').classList.toggle('show', !!livePrice); setBTCBadge(F.btc,'manual'); }
+    if (rangeId) $(rangeId).value = el.value;
+    render();
+  });
+  if (rangeId) {
+    const rg = $(rangeId);
+    rg.addEventListener('input', () => {
+      F[key] = parseFloat(rg.value);
+      el.value = rg.value;
+      if (key==='btc') { btcManual=true; $('reset_live').classList.toggle('show',!!livePrice); setBTCBadge(F.btc,'manual'); }
+      render();
+    });
+  }
+}
+bindInput('btc','btc','btc_r');
+bindInput('mnav','mnav','mnav_r');
+bindInput('dur','dur','dur_r');
+bindInput('cash','cash');
+bindInput('div','div');
+bindInput('debt','debt');
+bindInput('pref','pref');
+bindInput('sh','sh');
+$('atm').addEventListener('click', function(){ F.atm=!F.atm; this.classList.toggle('on',F.atm); render(); });
+
+// ── Init ──────────────────────────────────────────────────────────────────
+async function init() {
+  // 1. Load JSON
+  try {
+    const data = await loadJSON();
+    applyJSON(data);
+  } catch(e) {
+    console.warn('JSON load failed, using defaults:', e);
+    $('data_vintage').textContent = 'data: fallback (defaults)';
+  }
+
+  // 2. Live BTC
+  try {
+    livePrice = await loadBTC();
+    if (!btcManual) {
+      F.btc = livePrice;
+      $('btc').value = Math.round(livePrice);
+      $('btc_r').value = Math.round(livePrice);
+    }
+    setBTCBadge(livePrice, 'live');
+  } catch(e) {
+    setBTCBadge(F.btc, 'stale');
+  }
+
+  // 3. First render
+  render();
+  $('loading').classList.add('gone');
+
+  // 4. Poll BTC every 60s
+  setInterval(async () => {
+    try {
+      livePrice = await loadBTC();
+      if (!btcManual) {
+        F.btc = livePrice;
+        $('btc').value = Math.round(livePrice);
+        $('btc_r').value = Math.round(livePrice);
+        render();
+      }
+      setBTCBadge(livePrice, btcManual ? 'manual' : 'live');
+    } catch(e) {}
+  }, 60000);
+}
+
+init();
+</script>
+</body>
+</html>
