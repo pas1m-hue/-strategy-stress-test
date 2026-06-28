@@ -7,18 +7,18 @@
     "maintainer": "Apps Script auto-push"
   },
   "balance_sheet": {
-    "btc_holdings": 846842,
-    "avg_cost_basis_usd": 75699,
-    "cash_reserve_usd_m": 900,
-    "shares_diluted_m": 386,
+    "btc_holdings": 847363,
+    "avg_cost_basis_usd": 75651,
+    "cash_reserve_usd_m": 1400,
+    "shares_diluted_m": 358.9,
     "annual_interest_m": 34.6
   },
-  "preferred_annual_div_m": 1700,
-  "total_debt_m": 8200,
-  "total_preferred_m": 15500,
+  "preferred_annual_div_m": 1711,
+  "total_debt_m": 6754,
+  "total_preferred_m": 15467,
   "convertible_ladder": [
     {
-      "id": "conv-sep28",
+      "id": "conv-2028",
       "label": "Sep 2028",
       "months_from_base": 27,
       "principal_m": 1010,
@@ -28,18 +28,18 @@
       "verified": true
     },
     {
-      "id": "conv-dec29",
+      "id": "conv-2029",
       "label": "Dec 2029",
       "months_from_base": 42,
-      "principal_m": 3000,
+      "principal_m": 1500,
       "coupon_pct": 0,
       "conversion_price": 672.4,
       "put_date_label": "Jun 2028",
       "verified": true
     },
     {
-      "id": "conv-mar30a",
-      "label": "Mar 2030 (0.625%)",
+      "id": "conv-2030a",
+      "label": "Mar 2030 A (0.625%)",
       "months_from_base": 45,
       "principal_m": 800,
       "coupon_pct": 0.625,
@@ -48,8 +48,8 @@
       "verified": true
     },
     {
-      "id": "conv-mar30b",
-      "label": "Mar 2030 (0%)",
+      "id": "conv-2030b",
+      "label": "Mar 2030 B (0%)",
       "months_from_base": 45,
       "principal_m": 2000,
       "coupon_pct": 0,
@@ -58,17 +58,17 @@
       "verified": true
     },
     {
-      "id": "conv-mar31",
+      "id": "conv-2031",
       "label": "Mar 2031",
       "months_from_base": 57,
-      "principal_m": 603.659,
+      "principal_m": 603.75,
       "coupon_pct": 0.875,
       "conversion_price": 232.72,
       "put_date_label": "Sep 2028",
       "verified": true
     },
     {
-      "id": "conv-jun32",
+      "id": "conv-2032",
       "label": "Jun 2032",
       "months_from_base": 72,
       "principal_m": 800,
