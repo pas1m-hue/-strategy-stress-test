@@ -1,7 +1,7 @@
 {
   "meta": {
     "schema_version": "1.0",
-    "last_updated": "2026-06-25",
+    "last_updated": "2026-06-28",
     "source": "Strategy 10-K/10-Q + 8-K. Verify ladder from latest filings.",
     "base_date": "2026-06-01",
     "maintainer": "Apps Script auto-push"
@@ -25,17 +25,17 @@
       "coupon_pct": 0.625,
       "conversion_price": 183.19,
       "put_date_label": "Sep 2027",
-      "verified": false
+      "verified": true
     },
     {
       "id": "conv-dec29",
       "label": "Dec 2029",
       "months_from_base": 42,
-      "principal_m": 800,
+      "principal_m": 3000,
       "coupon_pct": 0,
       "conversion_price": 672.4,
-      "put_date_label": "Dec 2028",
-      "verified": false
+      "put_date_label": "Jun 2028",
+      "verified": true
     },
     {
       "id": "conv-mar30a",
@@ -44,8 +44,8 @@
       "principal_m": 800,
       "coupon_pct": 0.625,
       "conversion_price": 149.77,
-      "put_date_label": "Mar 2028",
-      "verified": false
+      "put_date_label": "Sep 2028",
+      "verified": true
     },
     {
       "id": "conv-mar30b",
@@ -55,27 +55,27 @@
       "coupon_pct": 0,
       "conversion_price": 433.43,
       "put_date_label": "Mar 2028",
-      "verified": false
+      "verified": true
     },
     {
       "id": "conv-mar31",
       "label": "Mar 2031",
       "months_from_base": 57,
-      "principal_m": 800,
+      "principal_m": 603.659,
       "coupon_pct": 0.875,
-      "conversion_price": 232.7,
-      "put_date_label": "Mar 2029",
-      "verified": false
+      "conversion_price": 232.72,
+      "put_date_label": "Sep 2028",
+      "verified": true
     },
     {
       "id": "conv-jun32",
       "label": "Jun 2032",
       "months_from_base": 72,
-      "principal_m": 604,
+      "principal_m": 800,
       "coupon_pct": 2.25,
-      "conversion_price": 204.3,
-      "put_date_label": "Jun 2030",
-      "verified": false
+      "conversion_price": 204.33,
+      "put_date_label": "Jun 2029",
+      "verified": true
     }
   ],
   "preferred_stack": [
