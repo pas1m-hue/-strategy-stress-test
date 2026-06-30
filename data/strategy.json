@@ -1,21 +1,34 @@
 {
   "meta": {
-    "schema_version": "1.0",
-    "last_updated": "2026-06-28",
-    "source": "Strategy 10-K/10-Q + 8-K. Verify ladder from latest filings.",
+    "schema_version": "1.1",
+    "last_updated": "2026-06-29",
+    "source": "Strategy 8-K (2026-06-29, as of 2026-06-28) \u2014 Digital Credit Capital Framework. 8-K (2026-06-22) for prior BTC/cost. strategy.com dashboard (2026-06-26) for preferred/shares/debt. 10-Q (2026-05-06) for ladder.",
     "base_date": "2026-06-01",
-    "maintainer": "Apps Script auto-push"
+    "as_of_note": "USD Reserve $2,550M and BTC holdings 847,363 as of Jun 28 (8-K Jun 29). Shares ~371M estimated (358.9M Jun-26 base + 12.67M ATM Jun 22-28, some already in base). Confirm shares from next strategy.com dashboard.",
+    "post_filing_adjustment": "APPLIED: May 2026 buyback conv-2029 $3,000M\u2192$1,500M confirmed. Jun 29 8-K: USD Reserve $2,550M (ATM-funded), STRC rate 12.00% from Jul 1, Digital Credit Capital Framework adopted \u2014 see meta.digital_credit_framework.",
+    "maintainer": "Verified against filings by Claude",
+    "digital_credit_framework": {
+      "announced": "2026-06-29",
+      "usd_reserve_minimum_months": 12,
+      "usd_reserve_current_m": 2550,
+      "digital_credit_repurchase_authorization_m": 1000,
+      "common_repurchase_authorization_m": 1000,
+      "btc_monetization_reserve_target_m": 1250,
+      "strc_new_rate_pct": 12.0,
+      "strc_rate_effective": "2026-07-01",
+      "note": "Board now formally authorizes BTC sales for: (1) USD Reserve top-up to $1.25B additional, (2) dividend/interest payments when more advantageous than ATM, (3) funding repurchases. Minimum USD Reserve = 12mo preferred div + interest (~$1.75B). This de-risks Clock B materially \u2014 reserve is now board-governed with explicit minimum."
+    }
   },
   "balance_sheet": {
     "btc_holdings": 847363,
     "avg_cost_basis_usd": 75651,
-    "cash_reserve_usd_m": 1400,
-    "shares_diluted_m": 358.9,
+    "cash_reserve_usd_m": 2550,
+    "shares_diluted_m": 371.0,
     "annual_interest_m": 34.6
   },
-  "preferred_annual_div_m": 1711,
+  "preferred_annual_div_m": 1765,
   "total_debt_m": 6754,
-  "total_preferred_m": 15467,
+  "total_preferred_m": 15771,
   "convertible_ladder": [
     {
       "id": "conv-2028",
@@ -25,6 +38,7 @@
       "coupon_pct": 0.625,
       "conversion_price": 183.19,
       "put_date_label": "Sep 2027",
+      "put_months_from_base": 15,
       "verified": true
     },
     {
@@ -32,9 +46,10 @@
       "label": "Dec 2029",
       "months_from_base": 42,
       "principal_m": 1500,
-      "coupon_pct": 0,
+      "coupon_pct": 0.0,
       "conversion_price": 672.4,
       "put_date_label": "Jun 2028",
+      "put_months_from_base": 24,
       "verified": true
     },
     {
@@ -45,6 +60,7 @@
       "coupon_pct": 0.625,
       "conversion_price": 149.77,
       "put_date_label": "Sep 2028",
+      "put_months_from_base": 27,
       "verified": true
     },
     {
@@ -52,9 +68,10 @@
       "label": "Mar 2030 B (0%)",
       "months_from_base": 45,
       "principal_m": 2000,
-      "coupon_pct": 0,
+      "coupon_pct": 0.0,
       "conversion_price": 433.43,
       "put_date_label": "Mar 2028",
+      "put_months_from_base": 21,
       "verified": true
     },
     {
@@ -65,6 +82,7 @@
       "coupon_pct": 0.875,
       "conversion_price": 232.72,
       "put_date_label": "Sep 2028",
+      "put_months_from_base": 27,
       "verified": true
     },
     {
@@ -75,6 +93,7 @@
       "coupon_pct": 2.25,
       "conversion_price": 204.33,
       "put_date_label": "Jun 2029",
+      "put_months_from_base": 36,
       "verified": true
     }
   ],
@@ -82,42 +101,42 @@
     {
       "id": "strf",
       "ticker": "STRF",
-      "nominal_m": 500,
-      "dividend_rate_pct": 10,
+      "nominal_m": 1284,
+      "dividend_rate_pct": 10.0,
       "cumulative": true,
       "senior": 1
     },
     {
       "id": "strc",
       "ticker": "STRC",
-      "nominal_m": 8500,
-      "dividend_rate_pct": 11.5,
+      "nominal_m": 10791,
+      "dividend_rate_pct": 12.0,
+      "cumulative": true,
+      "senior": 2
+    },
+    {
+      "id": "stre",
+      "ticker": "STRE",
+      "nominal_m": 892,
+      "dividend_rate_pct": 10.0,
       "cumulative": true,
       "senior": 2
     },
     {
       "id": "strk",
       "ticker": "STRK",
-      "nominal_m": 2500,
-      "dividend_rate_pct": 8,
+      "nominal_m": 1402,
+      "dividend_rate_pct": 8.0,
       "cumulative": true,
       "senior": 3
     },
     {
       "id": "strd",
       "ticker": "STRD",
-      "nominal_m": 1000,
-      "dividend_rate_pct": 10,
+      "nominal_m": 1402,
+      "dividend_rate_pct": 10.0,
       "cumulative": false,
       "senior": 4
-    },
-    {
-      "id": "stre",
-      "ticker": "STRE",
-      "nominal_m": 3000,
-      "dividend_rate_pct": 10,
-      "cumulative": true,
-      "senior": 2
     }
   ]
 }
